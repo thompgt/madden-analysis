@@ -104,8 +104,19 @@ def normalize_name(name):
     return name
 
 
+# Madden's roster export abbreviates the two New York teams ("NY Giants"/"NY Jets") while nflverse's
+# team_name crosswalk uses the full name ("New York Giants"/"New York Jets"). Matching is blocked on exact
+# team name, so without this fix those two teams' 132 players never match to any real stats/contracts at
+# all (0%), not just at a lower rate -- a silent full-roster gap rather than ordinary match-rate noise.
+MADDEN_TEAM_NAME_FIX = {
+    "NY Giants": "New York Giants",
+    "NY Jets": "New York Jets",
+}
+
+
 def load_madden():
     df = pd.read_csv(os.path.join(RAW_DIR, "Madden_26_Player_Ratings_Week-15.csv"))
+    df["team"] = df["team"].replace(MADDEN_TEAM_NAME_FIX)
     df["position_group"] = df["position"].map(MADDEN_POSITION_GROUP).fillna("Other")
     df["name_norm"] = df["name"].map(normalize_name)
     return df
